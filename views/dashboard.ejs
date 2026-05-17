@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Management Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e293b; --sidebar-bg: #0f172a; --accent: #3b82f6; --success: #10b981;
+            --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --card-bg: #ffffff;
+            --text-main: #334155; --text-muted: #64748b; --border: #e2e8f0;
+        }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg); font-family: 'Segoe UI', -apple-system, sans-serif; color: var(--text-main); }
+        .app-wrapper { display: grid; grid-template-columns: 260px 1fr; width: 100%; min-height: 100vh; }
+        
+        .sidebar { background-color: var(--sidebar-bg); color: white; padding: 30px 24px; box-sizing: border-box; }
+        .sidebar-brand { font-size: 22px; font-weight: 700; margin-bottom: 35px; color: white; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-item { margin-bottom: 10px; }
+        .sidebar-item a { color: #94a3b8; text-decoration: none; padding: 12px 16px; border-radius: 8px; display: block; font-weight: 500; transition: all 0.2s; }
+        .sidebar-item.active a, .sidebar-item a:hover { background-color: var(--accent); color: white; }
+        
+        .main-content { padding: 40px; box-sizing: border-box; background-color: var(--bg); }
+        .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header-title { margin: 0; font-size: 28px; font-weight: 700; color: var(--primary); }
+        .btn-logout { background-color: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 14px; }
+        
+        /* Stats Grid updated for 4 elements layout */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 35px; }
+        .stat-card { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .stat-card.blue { border-left: 5px solid var(--accent); }
+        .stat-card.green { border-left: 5px solid var(--success); }
+        .stat-card.orange { border-left: 5px solid var(--warning); }
+        .stat-card.purple { border-left: 5px solid #a855f7; }
+        .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--primary); margin: 0; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; align-items: start; }
+        .section-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); padding: 24px; box-sizing: border-box; }
+        .section-card h2 { margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 600; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        
+        .search-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; width: 220px; }
+        .styled-form { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .styled-form input, .styled-form select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background-color: white; color: var(--text-main); box-sizing: border-box; outline: none; }
+        .styled-form input:focus, .styled-form select:focus { border-color: var(--accent); }
+        .styled-form button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; }
+        .btn-add-room { background-color: var(--primary); }
+        .btn-add-student { background-color: var(--accent); }
+        
+        .custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        .custom-table th { background-color: #f1f5f9; color: var(--text-muted); padding: 12px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .custom-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .custom-table tr:hover { background-color: #f8fafc; }
+        
+        .badge { display: inline-block; padding: 4px 8px; font-size: 12px; font-weight: 600; border-radius: 6px; }
+        .badge-paid { background-color: #d1fae5; color: #065f46; }
+        .badge-pending { background-color: #fee2e2; color: #991b1b; }
+        .badge-available { background-color: #e0f2fe; color: #0369a1; }
+        .student-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .action-container { display: flex; gap: 6px; }
+        .action-btn { border: none; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-pay-now { background-color: #ecfdf5; color: var(--success); }
+        .btn-pay-now:hover { background-color: #d1fae5; }
+        .btn-leave-now { background-color: #fef2f2; color: var(--danger); }
+        .btn-leave-now:hover { background-color: #fee2e2; }
+
+        /* Chart Section Container styling */
+        .chart-section { max-width: 320px; margin: 0 auto; display: flex; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <div class="sidebar">
+            <div class="sidebar-brand">🏢 HostelAdmin</div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active"><a href="/">📊 Dashboard</a></li>
+                <li class="sidebar-item"><a href="/rooms">🛌 Rooms List</a></li>
+                <li class="sidebar-item"><a href="/students">👨‍🎓 Students List</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header-wrapper">
+                <div class="header-title">Hostel Overview Dashboard</div>
+                <a href="/logout" class="btn-logout">🔒 Logout</a>
+            </div>
+
+            <% 
+                let totalRooms = rooms.length; let totalStudents = students.length;
+                let totalCapacity = 0; let totalAllocated = 0;
+                rooms.forEach(r => { totalCapacity += r.capacity; totalAllocated += r.allocated; });
+                let freeBeds = totalCapacity - totalAllocated;
+            %>
+
+            <div class="stats-grid">
+                <div class="stat-card blue"><span class="stat-label">Total Rooms</span><p class="stat-value"><%= totalRooms %></p></div>
+                <div class="stat-card green"><span class="stat-label">Active Residents</span><p class="stat-value"><%= totalStudents %></p></div>
+                <div class="stat-card orange"><span class="stat-label">Available Beds</span><p class="stat-value"><%= freeBeds %></p></div>
+                <div class="stat-card purple"><span class="stat-label">Collected Revenue</span><p class="stat-value">₹<%= totalPaidRevenue %></p></div>
+            </div>
+
+            <div class="section-card" style="margin-bottom: 32px;">
+                <h2 style="justify-content: center;">📈 Real-time Bed Occupancy Ratio</h2>
+                <div class="chart-section">
+                    <canvas id="occupancyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="section-card">
+                    <h2>🛌 Rooms Registry</h2>
+                    <form action="/add-room" method="POST" class="styled-form">
+                        <div class="form-row">
+                            <input type="text" name="room_no" placeholder="Room No. (e.g., 101)" required>
+                            <input type="number" name="capacity" placeholder="Total Beds" min="1" required>
+                        </div>
+                        <button type="submit" class="btn-add-room">➕ Register New Room</button>
+                    </form>
+
+                    <table class="custom-table">
+                        <thead>
+                            <tr><th>Room Unit</th><th>Bed Specs</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <% rooms.forEach(room => { %>
+                                <tr>
+                                    <td><strong>Room <%= room.room_no %></strong></td>
+                                    <td><%= room.capacity %> Beds Total</td>
+                                    <td>
+                                        <% if(room.allocated >= room.capacity) { %>
+                                            <span class="badge badge-pending">🔴 Full (<%= room.allocated %>)</span>
+                                        <% } else { %>
+                                            <span class="badge badge-available">🟢 <%= room.capacity - room.allocated %> Free</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-card">
+                    <h2>
+                        <span>👨‍🎓 Active Allocations</span>
+                        <input type="text" class="search-input" placeholder="🔍 Search resident..." onkeyup="
+                            let value = this.value.toLowerCase().trim();
+                            document.querySelectorAll('#studentTable tbody tr').forEach(row => {
+                                row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
+                            });
+                        ">
+                    </h2>
+                    
+                    <form action="/add-student" method="POST" class="styled-form">
+                        <div class="form-row">
+                            <input type="text" name="name" placeholder="Full Name" required>
+                            <input type="text" name="roll_no" placeholder="Roll Number" required>
+                        </div>
+                        <div class="form-row">
+                            <input type="text" name="mobile" placeholder="Mobile Number" required>
+                            <input type="text" name="address" placeholder="Home Address" required>
+                        </div>
+                        <div class="form-row">
+                            <select name="room_id" required>
+                                <option value="">-- Assign Room --</option>
+                                <% rooms.forEach(room => { %>
+                                    <% if(room.allocated < room.capacity) { %>
+                                        <option value="<%= room.id %>">Room <%= room.room_no %> (<%= room.capacity - room.allocated %> open)</option>
+                                    <% } %>
+                                <% }) %>
+                            </select>
+                            <select name="fee_status">
+                                <option value="Pending">Pending</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-add-student">🎓 Board Student</button>
+                    </form>
+
+                    <table class="custom-table" id="studentTable">
+                        <thead>
+                            <tr><th>Resident</th><th>Room No</th><th>Bill Status</th><th>Control Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(student => { %>
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600;"><%= student.name %></div>
+                                        <div class="student-meta">ID: <%= student.roll_no %></div>
+                                    </td>
+                                    <td><strong>Room <%= student.room_no ? student.room_no : 'N/A' %></strong></td>
+                                    <td><span class="badge <%= student.fee_status === 'Paid' ? 'badge-paid' : 'badge-pending' %>"><%= student.fee_status %></span></td>
+                                    <td>
+                                        <div class="action-container">
+                                            <% if(student.fee_status === 'Pending') { %>
+                                                <form action="/update-fee/<%= student.id %>" method="POST" style="margin:0; padding:0; background:none;">
+                                                    <button type="submit" class="action-btn btn-pay-now">💵 Pay</button>
+                                                </form>
+                                            <% } %>
+                                            <form action="/checkout-student/<%= student.id %>" method="POST" style="margin:0; padding:0; background:none;" onsubmit="return confirm('Checkout student?');">
+                                                <input type="hidden" name="room_id" value="<%= student.room_id %>">
+                                                <button type="submit" class="action-btn btn-leave-now">❌ Leave</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('occupancyChart').getContext('2d');
+        const occupancyChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Occupied Beds', 'Available Beds'],
+                datasets: [{
+                    data: [<%= totalAllocated %>, <%= freeBeds %>],
+                    backgroundColor: ['#ef4444', '#10b981'],
+                    borderWidth: 1,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

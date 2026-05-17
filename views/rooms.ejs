@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rooms Directory</title>
+    <style>
+        :root {
+            --primary: #1e293b; --sidebar-bg: #0f172a; --accent: #3b82f6; --success: #10b981;
+            --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --card-bg: #ffffff;
+            --text-main: #334155; --text-muted: #64748b; --border: #e2e8f0;
+        }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg); font-family: 'Segoe UI', sans-serif; display: flex; }
+        .app-wrapper { display: grid; grid-template-columns: 260px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar { background-color: var(--sidebar-bg); color: white; padding: 30px 24px; box-sizing: border-box; }
+        .sidebar-brand { font-size: 22px; font-weight: 700; margin-bottom: 35px; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-item { margin-bottom: 10px; }
+        .sidebar-item a { color: #94a3b8; text-decoration: none; padding: 12px 16px; border-radius: 8px; display: block; font-weight: 500; }
+        .sidebar-item.active a, .sidebar-item a:hover { background-color: var(--accent); color: white; }
+        .main-content { padding: 40px; box-sizing: border-box; }
+        .header-title { margin-top: 0; margin-bottom: 30px; font-size: 28px; font-weight: 700; color: var(--primary); }
+        .section-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        .custom-table th { background-color: #f1f5f9; color: var(--text-muted); padding: 12px 16px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .custom-table td { padding: 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .badge { display: inline-block; padding: 4px 8px; font-size: 12px; font-weight: 600; border-radius: 6px; }
+        .badge-pending { background-color: #fee2e2; color: #991b1b; }
+        .badge-available { background-color: #e0f2fe; color: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <div class="sidebar">
+            <div class="sidebar-brand">🏢 HostelAdmin</div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item"><a href="/">📊 Dashboard</a></li>
+                <li class="sidebar-item active"><a href="/rooms">🛌 Rooms List</a></li>
+                <li class="sidebar-item"><a href="/students">👨‍🎓 Students List</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header-title">All Rooms Directory</div>
+            
+            <div class="section-card">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Room Unit</th>
+                            <th>Total Capacity</th>
+                            <th>Occupied Beds</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(rooms.length === 0) { %>
+                            <tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No rooms found.</td></tr>
+                        <% } else { %>
+                            <% rooms.forEach(room => { %>
+                                <tr>
+                                    <td><strong>Room <%= room.room_no %></strong></td>
+                                    <td><%= room.capacity %> Beds</td>
+                                    <td><%= room.allocated %> Beds Occupied</td>
+                                    <td>
+                                        <% if(room.allocated >= room.capacity) { %>
+                                            <span class="badge badge-pending">🔴 Full</span>
+                                        <% } else { %>
+                                            <span class="badge badge-available">🟢 <%= room.capacity - room.allocated %> Available</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
